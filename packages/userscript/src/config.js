@@ -147,6 +147,76 @@ const LinksManagerConfig = {
   ],
 
   // =================================================================
+  // TOPBAR CONFIGURATION
+  // =================================================================
+  
+  /**
+   * Enable the topbar feature
+   */
+  enableTopbar: true,
+
+  /**
+   * Domains where the topbar should appear (empty = all domains)
+   * Example: ['example.com', 'test.org']
+   */
+  topbarDomains: [],
+
+  /**
+   * Exclude domains from showing topbar
+   * Example: ['google.com', 'facebook.com']
+   */
+  topbarExcludeDomains: [],
+
+  /**
+   * Default collapsed state of the topbar
+   */
+  topbarCollapsed: false,
+
+  /**
+   * Remember topbar collapsed state across pages
+   */
+  topbarRememberState: true,
+
+  /**
+   * Topbar position: 'top' or 'bottom'
+   */
+  topbarPosition: 'top',
+
+  /**
+   * Keyboard shortcuts configuration
+   */
+  shortcuts: {
+    // Toggle topbar visibility
+    toggleTopbar: { key: 'l', ctrlKey: true, shiftKey: true },
+    // Cycle through priorities
+    cyclePriority: { key: 'p', ctrlKey: true, shiftKey: true },
+    // Cycle through statuses
+    cycleStatus: { key: 's', ctrlKey: true, shiftKey: true },
+    // Toggle crawl state
+    toggleCrawl: { key: 'c', ctrlKey: true, shiftKey: true }
+  },
+
+  /**
+   * Enable keyboard shortcuts
+   */
+  enableShortcuts: true,
+
+  // =================================================================
+  // CRAWL STATE CONFIGURATION
+  // =================================================================
+  
+  /**
+   * Crawl state definitions
+   */
+  crawlStates: {
+    idle: { label: 'Idle', color: '#6b7280', icon: 'pause' },
+    queued: { label: 'Queued', color: '#f59e0b', icon: 'clock' },
+    crawling: { label: 'Crawling', color: '#3b82f6', icon: 'refresh' },
+    completed: { label: 'Completed', color: '#22c55e', icon: 'check' },
+    failed: { label: 'Failed', color: '#ef4444', icon: 'alert' }
+  },
+
+  // =================================================================
   // CALLBACKS
   // =================================================================
   

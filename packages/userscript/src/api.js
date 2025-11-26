@@ -96,6 +96,40 @@ const LinksManagerAPI = {
       method: 'PUT',
       body: JSON.stringify({ is_deleted: isDeleted })
     });
+  },
+
+  /**
+   * Get current page info by URL
+   */
+  async getPageInfo(url) {
+    return this.request('/api/page/info', {
+      method: 'POST',
+      body: JSON.stringify({ url })
+    });
+  },
+
+  /**
+   * Get domain statistics
+   */
+  async getDomainStats(domain) {
+    return this.request(`/api/domains/${encodeURIComponent(domain)}/stats`);
+  },
+
+  /**
+   * Update crawl state for a link
+   */
+  async updateCrawlState(id, crawlState) {
+    return this.request(`/api/links/${id}/crawl-state`, {
+      method: 'PUT',
+      body: JSON.stringify({ crawl_state: crawlState })
+    });
+  },
+
+  /**
+   * Get total captured pages count
+   */
+  async getTotalPagesCount() {
+    return this.request('/api/stats/total-pages');
   }
 };
 
