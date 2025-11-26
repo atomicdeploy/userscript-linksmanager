@@ -1,30 +1,236 @@
-# userscript-linksmanager
-A userscript to collect certain links on the webpage and display information about them from an API
+# Links Manager Userscript
 
----
+A powerful userscript that collects and manages links on webpages with a backend API. Features include link status tracking, priority management, and real-time cross-tab synchronization.
 
-Please create a complete userscript that gathers data for each of the links on the webpage from an API server.
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-The links are normalized by their href, and only links that match a certain domain or certain path are collected. While this is being done in the background, a loading/spinner will be displayed beside the link. Note that there might be links with duplicated hrefs on a page, we match by their normalized href to avoid sending duplicated requests, also the returned results from the backend will be used for all links with the same normalized href. The server only collects the domain name and path, other parts of the link (e.g. hash) are ignored.
+## ✨ Features
 
-The initial submitting of the links to the backend can be done in batches (e.g. 10 links at a time).
+- **Link Collection & Normalization**: Automatically collects links on any webpage, normalizing URLs by domain and path
+- **Batch Processing**: Efficiently submits links to the backend in configurable batches
+- **Visual Status Badges**: Displays elegant badges next to links showing their status (New, Processed, Good, Bad, Pending)
+- **Interactive Dropdown Menu**: Rich dropdown with status controls, priority settings, and description editing
+- **Priority System**: 5-level priority system (None, Low, Medium, High, Critical) with visual indicators
+- **Blacklist/Delete**: Mark links as deleted with visual strikethrough styling
+- **Cross-Tab Sync**: Changes sync across all open tabs using BroadcastChannel API
+- **Real-Time Updates**: Optional WebSocket support for instant updates from the backend
+- **Light/Dark Theme**: Automatically adapts to system preferences or manual override
+- **Fully Customizable**: Modular architecture with clear configuration options
 
-Once details have been fetched about the link, it can be bound to that link. A badge/chip with dropdown capability will be displayed next to the link (instead of the loading spinner) that contains the state of the link (e.g. new, processed, bad/good, etc). The user can click to interact with a cool drop down menu that contains many features to manage this link on the backend.
+## 📁 Project Structure
 
-The server collects new links and store them in a database, if a link is missing, it is created; otherwise it is an existing link. Additionally, the color and style of the link changes depending on its state on the backend. for example, a green check icon can be included which means the link was successfully added to the database. The badge can have other colors indicating other states as well.
+```
+userscript-linksmanager/
+├── packages/
+│   ├── backend/           # Express.js API server
+│   │   ├── src/
+│   │   │   ├── index.js   # Main server with Socket.IO
+│   │   │   └── database.js # SQLite database module
+│   │   └── package.json
+│   │
+│   ├── userscript/        # Userscript source
+│   │   ├── src/
+│   │   │   ├── main.js    # Main entry point
+│   │   │   ├── config.js  # Configuration options
+│   │   │   ├── api.js     # API service module
+│   │   │   ├── ui.js      # UI components
+│   │   │   ├── icons.js   # SVG icons
+│   │   │   └── styles/
+│   │   │       └── main.scss # SCSS styles
+│   │   ├── dist/          # Built userscript
+│   │   ├── build.js       # Build script
+│   │   └── package.json
+│   │
+│   └── demo/              # Demo page for testing
+│       ├── public/
+│       │   └── index.html # Demo page with sample links
+│       ├── server.js      # Demo server
+│       └── package.json
+│
+├── package.json           # Root workspace config
+└── README.md
+```
 
-The features contain ability to mark the link as proccessed, setting the priority for the link, making the link as deleted (which makes the style of the link itself red and ~strikethrough~ as the link is blacklisted), adding/editing a description for the link. Other features include displaying the status of the link, date added/edited, count of other links on the same domain, etc.
+## 🚀 Quick Start
 
-The dropmenu has CTA buttons, e.g. to Process link, an icon for delete/blacklist, edit, etc. The user can change the link's priority, it will be updated in the backend as well as other places.
+### Prerequisites
 
-When the user interacts with the dropdown, the changes will be automatically sent to the backend to be applied/saved, as well as sending an event to other tabs so the links in other tabs will also get updated.
+- Node.js 18+ 
+- npm 9+
+- A userscript manager (Tampermonkey, Greasemonkey, Violentmonkey)
 
-Optional feature: The userscript can declare link_ids to subscribe for change events using socket.io/websockets to the backend, in an event the details of the link is changed in the database, new information will be received instantly.
+### Installation
 
-There are clear files (CSS, JS, etc) with clear sections so the developer can customize the behavior of the userscript, customize the style for each state, customize actions and what these do. Handle errors correctly, be atomic with updates (e.g. the user needs to be shown correct states for loading, submitting, errors, etc)
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/userscript-linksmanager/userscript-linksmanager.git
+   cd userscript-linksmanager
+   ```
 
-This is a monorepo, so please create a simple backend as well to handle the userscript. The design of UI elements will be nice and elegant. This is a modern, beautiful, SPA-like HTML5 with amazing light/dark styles that are professionally designed. Be DRY, comperhensive, extensible, customizable. Use good UI/UX tools and utilities, such as icons and such.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-You can write in SCSS and use a JS transpiler in your build system if needed. The design will be beautiful.
+3. **Build the userscript**
+   ```bash
+   npm run build
+   ```
 
-Create a demo directory that has loaded the userscript with some links in it to test various cases. The userscript and the webpage must not break or mess each other's styling, while in the same time delivering the capabilities of the userscript smoothly.
+4. **Start the backend server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Start the demo server** (in a new terminal)
+   ```bash
+   npm run demo
+   ```
+
+6. **Install the userscript**
+   - Open your userscript manager
+   - Create a new script
+   - Copy the contents of `packages/userscript/dist/linksmanager.user.js`
+   - Or visit `http://localhost:8080/linksmanager.user.js`
+
+7. **Test it out**
+   - Visit `http://localhost:8080` to see the demo page
+   - Links should display loading spinners, then status badges
+
+## ⚙️ Configuration
+
+Edit `packages/userscript/src/config.js` to customize:
+
+```javascript
+const LinksManagerConfig = {
+  // Backend API URL
+  apiUrl: 'http://localhost:3000',
+  
+  // Batch processing settings
+  batchSize: 10,
+  batchDelay: 100,
+  
+  // Domain filtering
+  includeDomains: [],        // Empty = all domains
+  excludeDomains: [],        // Domains to skip
+  
+  // Path filtering
+  includePathPatterns: [],   // Regex patterns to include
+  excludePathPatterns: [],   // Regex patterns to exclude
+  minPathDepth: 0,           // Minimum path segments
+  
+  // UI settings
+  badgePosition: 'after',    // 'before' or 'after' the link
+  darkMode: null,            // null = auto-detect
+  zIndex: 999999,
+  
+  // Status definitions (customize colors/icons)
+  statuses: {
+    new: { label: 'New', color: '#3b82f6', icon: 'sparkles' },
+    processed: { label: 'Processed', color: '#22c55e', icon: 'check' },
+    // ... more statuses
+  }
+};
+```
+
+## 🔌 API Endpoints
+
+The backend provides the following REST API:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check |
+| `POST` | `/api/links/batch` | Submit links in batch |
+| `GET` | `/api/links/:id` | Get link details |
+| `PUT` | `/api/links/:id/status` | Update link status |
+| `PUT` | `/api/links/:id/priority` | Update link priority |
+| `PUT` | `/api/links/:id/description` | Update link description |
+| `PUT` | `/api/links/:id/delete` | Toggle deleted status |
+| `GET` | `/api/links` | List all links |
+
+### WebSocket Events
+
+- `subscribe` - Subscribe to link update notifications
+- `unsubscribe` - Unsubscribe from updates
+- `link-changed` - Broadcasted when a link is updated
+
+## 🎨 Customizing Styles
+
+The userscript uses SCSS for styling. Edit `packages/userscript/src/styles/main.scss`:
+
+```scss
+// Colors
+$primary-color: #3b82f6;
+$success-color: #22c55e;
+$warning-color: #f59e0b;
+$danger-color: #ef4444;
+
+// Light theme
+$light-bg: #ffffff;
+$light-text: #1e293b;
+
+// Dark theme
+$dark-bg: #1e293b;
+$dark-text: #f1f5f9;
+
+// Sizing
+$badge-height: 22px;
+$dropdown-width: 320px;
+```
+
+After editing, rebuild with `npm run build`.
+
+## 🧩 Adding Custom Actions
+
+To add custom actions to the dropdown menu, edit `packages/userscript/src/ui.js`:
+
+```javascript
+// In createDropdownMenu(), add to the actions section:
+<button class="lm-action-btn" data-action="custom">
+  ${this.icons.star}
+  <span>Custom Action</span>
+</button>
+
+// Then handle in setupDropdownEvents():
+const customBtn = dropdown.querySelector('[data-action="custom"]');
+customBtn.addEventListener('click', async () => {
+  // Your custom logic here
+});
+```
+
+## 📦 Database Schema
+
+SQLite database with the following schema:
+
+```sql
+CREATE TABLE links (
+  id TEXT PRIMARY KEY,
+  url TEXT NOT NULL UNIQUE,
+  domain TEXT NOT NULL,
+  path TEXT NOT NULL,
+  status TEXT DEFAULT 'new',
+  priority INTEGER DEFAULT 0,
+  description TEXT DEFAULT '',
+  is_deleted INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🗺️ Roadmap
+
+- [ ] Keyboard shortcuts for common actions
+- [ ] Export/import link data
+- [ ] Link categorization with tags
+- [ ] Bulk operations UI
+- [ ] Browser extension version
+- [ ] REST API authentication

@@ -1,0 +1,21 @@
+{
+  "name": "@linksmanager/backend",
+  "version": "1.0.0",
+  "description": "Backend API server for Links Manager userscript",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js",
+    "build": "echo 'Backend ready'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "uuid": "^9.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
