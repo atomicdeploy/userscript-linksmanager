@@ -74,6 +74,11 @@
       LinksManagerAPI.init(LinksManagerConfig);
       LinksManagerUI.init(LinksManagerConfig, LinksManagerIcons, LinksManagerAPI);
 
+      // Initialize topbar if enabled
+      if (LinksManagerConfig.enableTopbar) {
+        await LinksManagerUI.initTopbar();
+      }
+
       // Collect and process links
       await this.collectAndProcessLinks();
 

@@ -16,6 +16,12 @@ const LinksManagerUI = {
   // BroadcastChannel for cross-tab sync
   channel: null,
 
+  // Topbar elements and state
+  topbar: null,
+  topbarCollapsed: false,
+  currentPageInfo: null,
+  domainStats: null,
+
   /**
    * Initialize UI components
    */
@@ -40,6 +46,11 @@ const LinksManagerUI = {
         this.closeDropdown();
       }
     });
+
+    // Setup keyboard shortcuts
+    if (this.config.enableShortcuts) {
+      this.setupKeyboardShortcuts();
+    }
   },
 
   /**
@@ -538,6 +549,572 @@ const LinksManagerUI = {
     } catch {
       return dateString;
     }
+  },
+
+  // =================================================================
+  // TOPBAR FUNCTIONALITY
+  // =================================================================
+
+  /**
+   * Check if topbar should be shown on current domain
+   */
+  shouldShowTopbar() {
+    if (!this.config.enableTopbar) return false;
+
+    const currentDomain = window.location.hostname;
+    const { topbarDomains, topbarExcludeDomains } = this.config;
+
+    // Check exclude list first
+    if (topbarExcludeDomains.length > 0) {
+      if (topbarExcludeDomains.some(d => currentDomain.includes(d))) {
+        return false;
+      }
+    }
+
+    // If include list is empty, show on all domains
+    if (topbarDomains.length === 0) return true;
+
+    // Check include list
+    return topbarDomains.some(d => currentDomain.includes(d));
+  },
+
+  /**
+   * Initialize and show the topbar
+   */
+  async initTopbar() {
+    if (!this.shouldShowTopbar()) return;
+
+    // Load collapsed state from storage
+    this.loadTopbarState();
+
+    // Create topbar element
+    this.topbar = this.createTopbar();
+    document.body.appendChild(this.topbar);
+
+    // Add body padding to prevent content overlap
+    this.updateBodyPadding();
+
+    // Fetch initial data
+    await this.refreshTopbarData();
+  },
+
+  /**
+   * Load topbar collapsed state from localStorage
+   */
+  loadTopbarState() {
+    if (this.config.topbarRememberState) {
+      try {
+        const saved = localStorage.getItem('lm-topbar-collapsed');
+        this.topbarCollapsed = saved === 'true';
+      } catch {
+        this.topbarCollapsed = this.config.topbarCollapsed;
+      }
+    } else {
+      this.topbarCollapsed = this.config.topbarCollapsed;
+    }
+  },
+
+  /**
+   * Save topbar collapsed state to localStorage
+   */
+  saveTopbarState() {
+    if (this.config.topbarRememberState) {
+      try {
+        localStorage.setItem('lm-topbar-collapsed', String(this.topbarCollapsed));
+      } catch {
+        // Storage not available
+      }
+    }
+  },
+
+  /**
+   * Create the topbar element
+   */
+  createTopbar() {
+    const topbar = document.createElement('div');
+    topbar.className = `lm-topbar ${this.config.topbarPosition === 'bottom' ? 'lm-topbar-bottom' : 'lm-topbar-top'}`;
+    if (this.topbarCollapsed) {
+      topbar.classList.add('lm-topbar-collapsed');
+    }
+    topbar.id = 'lm-topbar';
+
+    topbar.innerHTML = this.renderTopbarContent();
+    this.setupTopbarEvents(topbar);
+
+    return topbar;
+  },
+
+  /**
+   * Render topbar HTML content
+   */
+  renderTopbarContent() {
+    const shortcutHint = this.config.enableShortcuts ? this.formatShortcut(this.config.shortcuts.toggleTopbar) : '';
+    
+    return `
+      <div class="lm-topbar-container">
+        <div class="lm-topbar-collapsed-bar">
+          <button class="lm-topbar-expand-btn" title="Expand Links Manager${shortcutHint ? ' (' + shortcutHint + ')' : ''}">
+            ${this.icons.menu}
+            <span class="lm-topbar-brand">Links Manager</span>
+            ${this.icons.chevronDown}
+          </button>
+        </div>
+        
+        <div class="lm-topbar-content">
+          <div class="lm-topbar-header">
+            <div class="lm-topbar-brand-full">
+              ${this.icons.link}
+              <span>Links Manager</span>
+            </div>
+            <button class="lm-topbar-collapse-btn" title="Collapse${shortcutHint ? ' (' + shortcutHint + ')' : ''}">
+              ${this.icons.chevronUp}
+            </button>
+          </div>
+
+          <div class="lm-topbar-main">
+            <!-- Stats Section -->
+            <div class="lm-topbar-section lm-topbar-stats">
+              <div class="lm-stat-item" title="Total captured pages">
+                ${this.icons.database}
+                <span class="lm-stat-value" id="lm-stat-total">--</span>
+                <span class="lm-stat-label">Total</span>
+              </div>
+              <div class="lm-stat-item" title="Pages on this domain">
+                ${this.icons.globe}
+                <span class="lm-stat-value" id="lm-stat-domain">--</span>
+                <span class="lm-stat-label">Domain</span>
+              </div>
+            </div>
+
+            <!-- Current Page Section -->
+            <div class="lm-topbar-section lm-topbar-page">
+              <div class="lm-page-status">
+                <span class="lm-page-badge" id="lm-page-status-badge">
+                  ${this.icons.sparkles}
+                  <span id="lm-page-status-text">Loading...</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Priority Section -->
+            <div class="lm-topbar-section lm-topbar-priority">
+              <span class="lm-section-label">Priority</span>
+              <div class="lm-topbar-priority-btns" id="lm-topbar-priority-btns">
+                ${this.config.priorities.map(p => `
+                  <button class="lm-topbar-priority-btn" 
+                          data-priority="${p.value}"
+                          style="--btn-color: ${p.color}"
+                          title="${p.label}">
+                    ${p.value === 0 ? '−' : p.value}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="lm-topbar-section lm-topbar-status">
+              <span class="lm-section-label">Status</span>
+              <div class="lm-topbar-status-btns" id="lm-topbar-status-btns">
+                ${Object.entries(this.config.statuses).map(([key, status]) => `
+                  <button class="lm-topbar-status-btn"
+                          data-status="${key}"
+                          style="--btn-color: ${status.color}"
+                          title="${status.description}">
+                    ${this.icons.get(status.icon)}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Crawl State Section -->
+            <div class="lm-topbar-section lm-topbar-crawl">
+              <span class="lm-section-label">Crawl</span>
+              <div class="lm-topbar-crawl-btns" id="lm-topbar-crawl-btns">
+                ${Object.entries(this.config.crawlStates).map(([key, state]) => `
+                  <button class="lm-topbar-crawl-btn"
+                          data-crawl="${key}"
+                          style="--btn-color: ${state.color}"
+                          title="${state.label}">
+                    ${this.icons.get(state.icon)}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div class="lm-topbar-section lm-topbar-actions">
+              <button class="lm-topbar-action-btn" id="lm-copy-url" title="Copy URL">
+                ${this.icons.copy}
+              </button>
+              <button class="lm-topbar-action-btn" id="lm-refresh-data" title="Refresh data">
+                ${this.icons.refresh}
+              </button>
+            </div>
+          </div>
+
+          <!-- Keyboard Shortcuts Hint -->
+          ${this.config.enableShortcuts ? `
+          <div class="lm-topbar-shortcuts">
+            <span class="lm-shortcuts-hint">
+              ${this.icons.keyboard}
+              <span>Shortcuts: 
+                <kbd>${this.formatShortcut(this.config.shortcuts.toggleTopbar)}</kbd> Toggle
+                <kbd>${this.formatShortcut(this.config.shortcuts.cyclePriority)}</kbd> Priority
+                <kbd>${this.formatShortcut(this.config.shortcuts.cycleStatus)}</kbd> Status
+              </span>
+            </span>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  },
+
+  /**
+   * Setup topbar event listeners
+   */
+  setupTopbarEvents(topbar) {
+    // Collapse/expand buttons
+    const expandBtn = topbar.querySelector('.lm-topbar-expand-btn');
+    const collapseBtn = topbar.querySelector('.lm-topbar-collapse-btn');
+
+    if (expandBtn) {
+      expandBtn.addEventListener('click', () => this.toggleTopbar());
+    }
+    if (collapseBtn) {
+      collapseBtn.addEventListener('click', () => this.toggleTopbar());
+    }
+
+    // Priority buttons
+    topbar.querySelectorAll('.lm-topbar-priority-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const priority = parseInt(btn.dataset.priority, 10);
+        await this.updateCurrentPagePriority(priority);
+      });
+    });
+
+    // Status buttons
+    topbar.querySelectorAll('.lm-topbar-status-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const status = btn.dataset.status;
+        await this.updateCurrentPageStatus(status);
+      });
+    });
+
+    // Crawl state buttons
+    topbar.querySelectorAll('.lm-topbar-crawl-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const crawlState = btn.dataset.crawl;
+        await this.updateCurrentPageCrawlState(crawlState);
+      });
+    });
+
+    // Copy URL button
+    const copyBtn = topbar.querySelector('#lm-copy-url');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => this.copyCurrentUrl());
+    }
+
+    // Refresh data button
+    const refreshBtn = topbar.querySelector('#lm-refresh-data');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => this.refreshTopbarData());
+    }
+  },
+
+  /**
+   * Toggle topbar collapsed state
+   */
+  toggleTopbar() {
+    this.topbarCollapsed = !this.topbarCollapsed;
+    
+    if (this.topbar) {
+      this.topbar.classList.toggle('lm-topbar-collapsed', this.topbarCollapsed);
+    }
+    
+    this.saveTopbarState();
+    this.updateBodyPadding();
+  },
+
+  /**
+   * Update body padding to prevent content overlap
+   */
+  updateBodyPadding() {
+    const paddingProperty = this.config.topbarPosition === 'bottom' ? 'paddingBottom' : 'paddingTop';
+    const height = this.topbarCollapsed ? '36px' : '72px';
+    document.body.style[paddingProperty] = height;
+  },
+
+  /**
+   * Refresh topbar data from API
+   */
+  async refreshTopbarData() {
+    try {
+      // Get current page info
+      const pageInfoResponse = await this.api.getPageInfo(window.location.href);
+      this.currentPageInfo = pageInfoResponse;
+
+      // Get total pages count
+      const totalResponse = await this.api.getTotalPagesCount();
+
+      // Update UI
+      this.updateTopbarUI(pageInfoResponse, totalResponse.total_pages);
+    } catch (error) {
+      console.error('[LinksManager] Failed to refresh topbar data:', error);
+    }
+  },
+
+  /**
+   * Update topbar UI with data
+   */
+  updateTopbarUI(pageInfo, totalPages) {
+    if (!this.topbar) return;
+
+    // Update total pages stat
+    const totalEl = this.topbar.querySelector('#lm-stat-total');
+    if (totalEl) {
+      totalEl.textContent = this.formatNumber(totalPages);
+    }
+
+    // Update domain stat
+    const domainEl = this.topbar.querySelector('#lm-stat-domain');
+    if (domainEl && pageInfo.domain_stats) {
+      domainEl.textContent = this.formatNumber(pageInfo.domain_stats.total_links);
+    } else if (domainEl) {
+      domainEl.textContent = '0';
+    }
+
+    // Update page status
+    const statusBadge = this.topbar.querySelector('#lm-page-status-badge');
+    const statusText = this.topbar.querySelector('#lm-page-status-text');
+    
+    if (pageInfo.exists && pageInfo.link) {
+      const link = pageInfo.link;
+      const statusConfig = this.config.statuses[link.status] || this.config.statuses.new;
+      
+      if (statusBadge) {
+        statusBadge.style.setProperty('--badge-color', statusConfig.color);
+        statusBadge.innerHTML = `${this.icons.get(statusConfig.icon)}<span id="lm-page-status-text">${statusConfig.label}</span>`;
+      }
+
+      // Update active priority button
+      this.topbar.querySelectorAll('.lm-topbar-priority-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.priority, 10) === link.priority);
+      });
+
+      // Update active status button
+      this.topbar.querySelectorAll('.lm-topbar-status-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === link.status);
+      });
+
+      // Update active crawl state button
+      const crawlState = link.crawl_state || 'idle';
+      this.topbar.querySelectorAll('.lm-topbar-crawl-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.crawl === crawlState);
+      });
+    } else {
+      if (statusText) {
+        statusText.textContent = 'Not tracked';
+      }
+      if (statusBadge) {
+        statusBadge.style.setProperty('--badge-color', '#6b7280');
+      }
+    }
+  },
+
+  /**
+   * Update current page priority
+   */
+  async updateCurrentPagePriority(priority) {
+    if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) {
+      this.showError('Page not tracked yet');
+      return;
+    }
+
+    try {
+      const response = await this.api.updatePriority(this.currentPageInfo.link.id, priority);
+      this.currentPageInfo.link = response.link;
+      this.updateTopbarUI(this.currentPageInfo, null);
+      this.broadcastLinkUpdate(response.link);
+    } catch (error) {
+      this.showError('Failed to update priority');
+    }
+  },
+
+  /**
+   * Update current page status
+   */
+  async updateCurrentPageStatus(status) {
+    if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) {
+      this.showError('Page not tracked yet');
+      return;
+    }
+
+    try {
+      const response = await this.api.updateStatus(this.currentPageInfo.link.id, status);
+      this.currentPageInfo.link = response.link;
+      this.updateTopbarUI(this.currentPageInfo, null);
+      this.broadcastLinkUpdate(response.link);
+    } catch (error) {
+      this.showError('Failed to update status');
+    }
+  },
+
+  /**
+   * Update current page crawl state
+   */
+  async updateCurrentPageCrawlState(crawlState) {
+    if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) {
+      this.showError('Page not tracked yet');
+      return;
+    }
+
+    try {
+      const response = await this.api.updateCrawlState(this.currentPageInfo.link.id, crawlState);
+      this.currentPageInfo.link = response.link;
+      this.updateTopbarUI(this.currentPageInfo, null);
+      this.broadcastLinkUpdate(response.link);
+    } catch (error) {
+      this.showError('Failed to update crawl state');
+    }
+  },
+
+  /**
+   * Copy current URL to clipboard
+   */
+  async copyCurrentUrl() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      const btn = this.topbar.querySelector('#lm-copy-url');
+      if (btn) {
+        btn.classList.add('lm-copied');
+        setTimeout(() => btn.classList.remove('lm-copied'), 1500);
+      }
+    } catch (error) {
+      this.showError('Failed to copy URL');
+    }
+  },
+
+  /**
+   * Format number with K/M suffix
+   */
+  formatNumber(num) {
+    if (num === null || num === undefined) return '--';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return String(num);
+  },
+
+  /**
+   * Format keyboard shortcut for display
+   */
+  formatShortcut(shortcut) {
+    if (!shortcut) return '';
+    const parts = [];
+    if (shortcut.ctrlKey) parts.push('Ctrl');
+    if (shortcut.shiftKey) parts.push('Shift');
+    if (shortcut.altKey) parts.push('Alt');
+    if (shortcut.metaKey) parts.push('Cmd');
+    parts.push(shortcut.key.toUpperCase());
+    return parts.join('+');
+  },
+
+  /**
+   * Setup keyboard shortcuts
+   */
+  setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (e.target.matches('input, textarea, select, [contenteditable]')) {
+        return;
+      }
+
+      const { shortcuts } = this.config;
+
+      // Toggle topbar
+      if (this.matchesShortcut(e, shortcuts.toggleTopbar)) {
+        e.preventDefault();
+        this.toggleTopbar();
+        return;
+      }
+
+      // Cycle priority
+      if (this.matchesShortcut(e, shortcuts.cyclePriority)) {
+        e.preventDefault();
+        this.cyclePriority();
+        return;
+      }
+
+      // Cycle status
+      if (this.matchesShortcut(e, shortcuts.cycleStatus)) {
+        e.preventDefault();
+        this.cycleStatus();
+        return;
+      }
+
+      // Toggle crawl state
+      if (this.matchesShortcut(e, shortcuts.toggleCrawl)) {
+        e.preventDefault();
+        this.toggleCrawlState();
+        return;
+      }
+    });
+  },
+
+  /**
+   * Check if key event matches shortcut
+   */
+  matchesShortcut(event, shortcut) {
+    if (!shortcut) return false;
+    return (
+      event.key.toLowerCase() === shortcut.key.toLowerCase() &&
+      event.ctrlKey === (shortcut.ctrlKey || false) &&
+      event.shiftKey === (shortcut.shiftKey || false) &&
+      event.altKey === (shortcut.altKey || false) &&
+      event.metaKey === (shortcut.metaKey || false)
+    );
+  },
+
+  /**
+   * Cycle through priorities
+   */
+  async cyclePriority() {
+    if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) return;
+
+    const currentPriority = this.currentPageInfo.link.priority || 0;
+    const priorities = this.config.priorities.map(p => p.value);
+    const currentIndex = priorities.indexOf(currentPriority);
+    const nextIndex = (currentIndex + 1) % priorities.length;
+    const nextPriority = priorities[nextIndex];
+
+    await this.updateCurrentPagePriority(nextPriority);
+  },
+
+  /**
+   * Cycle through statuses
+   */
+  async cycleStatus() {
+    if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) return;
+
+    const currentStatus = this.currentPageInfo.link.status || 'new';
+    const statuses = Object.keys(this.config.statuses);
+    const currentIndex = statuses.indexOf(currentStatus);
+    const nextIndex = (currentIndex + 1) % statuses.length;
+    const nextStatus = statuses[nextIndex];
+
+    await this.updateCurrentPageStatus(nextStatus);
+  },
+
+  /**
+   * Toggle crawl state between idle and queued
+   */
+  async toggleCrawlState() {
+    if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) return;
+
+    const currentCrawl = this.currentPageInfo.link.crawl_state || 'idle';
+    const nextCrawl = currentCrawl === 'idle' ? 'queued' : 'idle';
+
+    await this.updateCurrentPageCrawlState(nextCrawl);
   }
 };
 

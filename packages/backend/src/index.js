@@ -235,6 +235,92 @@ app.get('/api/links', (req, res) => {
   }
 });
 
+/**
+ * Get page info by URL
+ * POST /api/page/info
+ * Body: { url: string }
+ */
+app.post('/api/page/info', (req, res) => {
+  try {
+    const { url } = req.body;
+    
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    const link = db.getLinkByUrl(url);
+    if (!link) {
+      return res.json({ exists: false, link: null });
+    }
+    
+    // Include domain stats
+    const domainStats = db.getDomainStats(link.domain);
+    res.json({ 
+      exists: true, 
+      link: { ...link, domain_link_count: domainStats.total_links },
+      domain_stats: domainStats
+    });
+  } catch (error) {
+    console.error('Error getting page info:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Get domain statistics
+ * GET /api/domains/:domain/stats
+ */
+app.get('/api/domains/:domain/stats', (req, res) => {
+  try {
+    const domain = decodeURIComponent(req.params.domain);
+    const stats = db.getDomainStats(domain);
+    res.json({ stats });
+  } catch (error) {
+    console.error('Error getting domain stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Update link crawl state
+ * PUT /api/links/:id/crawl-state
+ * Body: { crawl_state: string }
+ */
+app.put('/api/links/:id/crawl-state', (req, res) => {
+  try {
+    const { crawl_state } = req.body;
+    
+    if (!Object.values(db.CRAWL_STATE).includes(crawl_state)) {
+      return res.status(400).json({ error: 'Invalid crawl state' });
+    }
+
+    const link = db.updateLinkCrawlState(req.params.id, crawl_state);
+    if (!link) {
+      return res.status(404).json({ error: 'Link not found' });
+    }
+
+    broadcastLinkUpdate(link);
+    res.json({ link });
+  } catch (error) {
+    console.error('Error updating crawl state:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Get total pages count
+ * GET /api/stats/total-pages
+ */
+app.get('/api/stats/total-pages', (req, res) => {
+  try {
+    const count = db.getTotalPagesCount();
+    res.json({ total_pages: count });
+  } catch (error) {
+    console.error('Error getting total pages count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
