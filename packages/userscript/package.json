@@ -1,0 +1,20 @@
+{
+  "name": "@linksmanager/userscript",
+  "version": "1.0.0",
+  "description": "Userscript for collecting and managing links on webpages",
+  "main": "dist/linksmanager.user.js",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch"
+  },
+  "devDependencies": {
+    "sass": "^1.71.1"
+  },
+  "keywords": [
+    "userscript",
+    "greasemonkey",
+    "tampermonkey"
+  ],
+  "author": "",
+  "license": "MIT"
+}

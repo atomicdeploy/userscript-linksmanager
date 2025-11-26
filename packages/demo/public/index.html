@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Links Manager Demo</title>
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border-color: #334155;
+        --accent-color: #60a5fa;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+    }
+
+    .install-banner {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .install-banner p {
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .install-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: var(--accent-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .install-btn:hover {
+      opacity: 0.9;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-description {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+    }
+
+    .links-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .link-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .link-item:hover {
+      border-color: var(--accent-color);
+    }
+
+    .link-item a {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .link-item a:hover {
+      text-decoration: underline;
+    }
+
+    .link-meta {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-left: 12px;
+    }
+
+    .article {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .article h3 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+
+    .article p {
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .article a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    .article a:hover {
+      text-decoration: underline;
+    }
+
+    .inline-links {
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .inline-links a {
+      color: var(--accent-color);
+      text-decoration: none;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .inline-links a:hover {
+      background: rgba(59, 130, 246, 0.2);
+    }
+
+    footer {
+      margin-top: 60px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Links Manager Demo</h1>
+      <p class="subtitle">Test page for the Links Manager userscript</p>
+    </header>
+
+    <div class="install-banner">
+      <p>Install the userscript to see link badges appear next to each link below.</p>
+      <a href="/linksmanager.user.js" class="install-btn">Install Userscript</a>
+    </div>
+
+    <!-- Section: Product Links -->
+    <section class="section">
+      <h2 class="section-title">🛍️ Product Links</h2>
+      <p class="section-description">E-commerce and product page links</p>
+      <div class="links-grid">
+        <div class="link-item">
+          <a href="https://example.com/products/laptop-pro-2024">Laptop Pro 2024 - Premium Model</a>
+          <span class="link-meta">example.com</span>
+        </div>
+        <div class="link-item">
+          <a href="https://example.com/products/wireless-headphones">Wireless Noise-Canceling Headphones</a>
+          <span class="link-meta">example.com</span>
+        </div>
+        <div class="link-item">
+          <a href="https://shop.example.org/items/smart-watch-ultra">Smart Watch Ultra Edition</a>
+          <span class="link-meta">shop.example.org</span>
+        </div>
+        <div class="link-item">
+          <a href="https://store.test.com/products/mechanical-keyboard">RGB Mechanical Keyboard</a>
+          <span class="link-meta">store.test.com</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: News Articles -->
+    <section class="section">
+      <h2 class="section-title">📰 News & Articles</h2>
+      <p class="section-description">Links embedded within article content</p>
+      
+      <article class="article">
+        <h3>The Future of Web Development</h3>
+        <p>
+          Modern frameworks like <a href="https://react.dev/learn">React</a>, 
+          <a href="https://vuejs.org/guide/introduction.html">Vue.js</a>, and 
+          <a href="https://svelte.dev/docs/introduction">Svelte</a> are changing how we build web applications.
+          Read more about <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript">JavaScript fundamentals</a> 
+          on MDN Web Docs.
+        </p>
+      </article>
+
+      <article class="article">
+        <h3>Best Practices for API Design</h3>
+        <p>
+          Check out the <a href="https://jsonapi.org/format/">JSON:API specification</a> 
+          and <a href="https://swagger.io/specification/">OpenAPI Specification</a> for building robust APIs.
+          Also see <a href="https://graphql.org/learn/">GraphQL documentation</a> for an alternative approach.
+        </p>
+      </article>
+    </section>
+
+    <!-- Section: Duplicate Links -->
+    <section class="section">
+      <h2 class="section-title">🔄 Duplicate Link Test</h2>
+      <p class="section-description">Multiple links pointing to the same URL should share the same badge data</p>
+      <div class="links-grid">
+        <div class="link-item">
+          <a href="https://github.com/userscript-linksmanager">GitHub Repository (Link 1)</a>
+          <span class="link-meta">github.com</span>
+        </div>
+        <div class="link-item">
+          <a href="https://github.com/userscript-linksmanager">GitHub Repository (Link 2)</a>
+          <span class="link-meta">github.com</span>
+        </div>
+        <div class="link-item">
+          <a href="https://github.com/userscript-linksmanager#readme">Same repo with hash (different normalization)</a>
+          <span class="link-meta">github.com</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: External Resources -->
+    <section class="section">
+      <h2 class="section-title">🔗 External Resources</h2>
+      <p class="section-description">Various external website links</p>
+      <div class="links-grid">
+        <div class="link-item">
+          <a href="https://developer.mozilla.org/en-US/docs/Web">MDN Web Docs</a>
+          <span class="link-meta">developer.mozilla.org</span>
+        </div>
+        <div class="link-item">
+          <a href="https://stackoverflow.com/questions">Stack Overflow Questions</a>
+          <span class="link-meta">stackoverflow.com</span>
+        </div>
+        <div class="link-item">
+          <a href="https://news.ycombinator.com/">Hacker News</a>
+          <span class="link-meta">news.ycombinator.com</span>
+        </div>
+        <div class="link-item">
+          <a href="https://www.producthunt.com/">Product Hunt</a>
+          <span class="link-meta">producthunt.com</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Inline Links Paragraph -->
+    <section class="section">
+      <h2 class="section-title">📝 Inline Links in Text</h2>
+      <p class="section-description">Dense paragraph with many inline links</p>
+      <div class="article">
+        <p class="inline-links">
+          When building modern web applications, developers often use tools like 
+          <a href="https://webpack.js.org/">Webpack</a> or <a href="https://vitejs.dev/">Vite</a> for bundling,
+          <a href="https://eslint.org/">ESLint</a> for linting, and <a href="https://prettier.io/">Prettier</a> 
+          for code formatting. For styling, popular options include <a href="https://tailwindcss.com/">Tailwind CSS</a>,
+          <a href="https://styled-components.com/">styled-components</a>, and <a href="https://sass-lang.com/">Sass</a>.
+          Testing frameworks like <a href="https://jestjs.io/">Jest</a>, <a href="https://vitest.dev/">Vitest</a>, 
+          and <a href="https://playwright.dev/">Playwright</a> ensure code quality.
+          For state management, consider <a href="https://redux.js.org/">Redux</a>, 
+          <a href="https://zustand-demo.pmnd.rs/">Zustand</a>, or <a href="https://pinia.vuejs.org/">Pinia</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Section: Special Cases -->
+    <section class="section">
+      <h2 class="section-title">⚠️ Edge Cases</h2>
+      <p class="section-description">Testing various edge cases for link handling</p>
+      <div class="links-grid">
+        <div class="link-item">
+          <a href="https://example.com/path/with/many/segments/deep">Deep path link</a>
+          <span class="link-meta">5 path segments</span>
+        </div>
+        <div class="link-item">
+          <a href="https://example.com/">Root path only</a>
+          <span class="link-meta">Root path</span>
+        </div>
+        <div class="link-item">
+          <a href="https://example.com/page?query=value&other=123">Link with query params</a>
+          <span class="link-meta">Has query string</span>
+        </div>
+        <div class="link-item">
+          <a href="https://subdomain.example.com/resource">Subdomain link</a>
+          <span class="link-meta">subdomain.example.com</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        Links Manager Demo Page | 
+        <a href="https://github.com/userscript-linksmanager">View on GitHub</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- 
+    The userscript will automatically inject itself when installed.
+    No additional JavaScript is needed on this page.
+  -->
+</body>
+</html>

@@ -1,0 +1,532 @@
+/**
+ * Links Manager Userscript - Styles
+ * 
+ * SCSS styles for the userscript UI components.
+ * Includes light and dark theme support.
+ */
+
+// =================================================================
+// VARIABLES - Customize these to change the look and feel
+// =================================================================
+
+// Colors
+$primary-color: #3b82f6;
+$success-color: #22c55e;
+$warning-color: #f59e0b;
+$danger-color: #ef4444;
+$info-color: #06b6d4;
+
+// Light theme
+$light-bg: #ffffff;
+$light-bg-secondary: #f8fafc;
+$light-text: #1e293b;
+$light-text-secondary: #64748b;
+$light-border: #e2e8f0;
+$light-shadow: rgba(0, 0, 0, 0.1);
+
+// Dark theme
+$dark-bg: #1e293b;
+$dark-bg-secondary: #0f172a;
+$dark-text: #f1f5f9;
+$dark-text-secondary: #94a3b8;
+$dark-border: #334155;
+$dark-shadow: rgba(0, 0, 0, 0.3);
+
+// Sizing
+$badge-height: 22px;
+$badge-font-size: 11px;
+$icon-size: 14px;
+$dropdown-width: 320px;
+$border-radius: 6px;
+$border-radius-sm: 4px;
+
+// Animation
+$transition-fast: 150ms ease;
+$transition-normal: 200ms ease;
+
+// Z-index
+$z-index-base: 999999;
+
+// =================================================================
+// MIXINS
+// =================================================================
+
+@mixin light-theme {
+  --lm-bg: #{$light-bg};
+  --lm-bg-secondary: #{$light-bg-secondary};
+  --lm-text: #{$light-text};
+  --lm-text-secondary: #{$light-text-secondary};
+  --lm-border: #{$light-border};
+  --lm-shadow: #{$light-shadow};
+}
+
+@mixin dark-theme {
+  --lm-bg: #{$dark-bg};
+  --lm-bg-secondary: #{$dark-bg-secondary};
+  --lm-text: #{$dark-text};
+  --lm-text-secondary: #{$dark-text-secondary};
+  --lm-border: #{$dark-border};
+  --lm-shadow: #{$dark-shadow};
+}
+
+// =================================================================
+// BASE STYLES
+// =================================================================
+
+.lm-root {
+  // Default to light theme
+  @include light-theme;
+  
+  // Font stack
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  
+  // Reset box-sizing
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  
+  // Dark mode support
+  &.lm-dark {
+    @include dark-theme;
+  }
+  
+  // Auto dark mode based on system preference
+  @media (prefers-color-scheme: dark) {
+    &:not(.lm-light) {
+      @include dark-theme;
+    }
+  }
+}
+
+// =================================================================
+// ICON STYLES
+// =================================================================
+
+.lm-icon {
+  width: $icon-size;
+  height: $icon-size;
+  display: inline-flex;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+// Spinner animation
+.lm-spinner {
+  animation: lm-spin 1s linear infinite;
+}
+
+@keyframes lm-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// =================================================================
+// BADGE STYLES
+// =================================================================
+
+.lm-badge-wrapper {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  position: relative;
+  margin-left: 4px;
+}
+
+.lm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: $badge-height;
+  padding: 0 8px;
+  font-size: $badge-font-size;
+  font-weight: 500;
+  color: var(--lm-badge-color, #{$primary-color});
+  background: color-mix(in srgb, var(--lm-badge-color, #{$primary-color}) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lm-badge-color, #{$primary-color}) 30%, transparent);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+  
+  // Reset button styles
+  font-family: inherit;
+  outline: none;
+  
+  &:hover {
+    background: color-mix(in srgb, var(--lm-badge-color, #{$primary-color}) 20%, transparent);
+    border-color: color-mix(in srgb, var(--lm-badge-color, #{$primary-color}) 50%, transparent);
+  }
+  
+  &:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--lm-badge-color, #{$primary-color}) 30%, transparent);
+  }
+  
+  .lm-icon:last-child {
+    width: 12px;
+    height: 12px;
+    margin-left: 2px;
+    opacity: 0.6;
+  }
+  
+  // Priority indicator
+  &.lm-badge-has-priority {
+    border-left: 3px solid var(--lm-priority-color, #{$warning-color});
+    padding-left: 6px;
+  }
+  
+  // Deleted state
+  &.lm-badge-deleted {
+    opacity: 0.6;
+    text-decoration: line-through;
+  }
+}
+
+.lm-badge-label {
+  display: inline-block;
+}
+
+// Loading badge
+.lm-badge-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $badge-height;
+  height: $badge-height;
+  padding: 0;
+  margin-left: 4px;
+  color: var(--lm-text-secondary, #{$light-text-secondary});
+  background: transparent;
+  border: none;
+  
+  .lm-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Deleted link styling
+.lm-link-deleted {
+  color: $danger-color !important;
+  text-decoration: line-through !important;
+  opacity: 0.7;
+}
+
+// =================================================================
+// DROPDOWN STYLES
+// =================================================================
+
+.lm-dropdown {
+  position: absolute;
+  z-index: $z-index-base;
+  width: $dropdown-width;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--lm-bg);
+  border: 1px solid var(--lm-border);
+  border-radius: $border-radius;
+  box-shadow: 0 10px 40px var(--lm-shadow), 0 2px 10px var(--lm-shadow);
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity $transition-normal, transform $transition-normal;
+  
+  &.lm-dropdown-open {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  // Loading overlay
+  &.lm-dropdown-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--lm-bg);
+    opacity: 0.7;
+    z-index: 10;
+    cursor: wait;
+  }
+}
+
+.lm-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--lm-border);
+  background: var(--lm-bg-secondary);
+}
+
+.lm-dropdown-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lm-text);
+}
+
+.lm-dropdown-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--lm-text-secondary);
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    background: var(--lm-border);
+    color: var(--lm-text);
+  }
+  
+  .lm-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Info section
+.lm-dropdown-info {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--lm-border);
+}
+
+.lm-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.lm-info-label {
+  flex-shrink: 0;
+  width: 90px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--lm-text-secondary);
+}
+
+.lm-info-value {
+  font-size: 12px;
+  color: var(--lm-text);
+  word-break: break-word;
+}
+
+.lm-info-url {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 11px;
+}
+
+// Dropdown sections
+.lm-dropdown-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--lm-border);
+}
+
+.lm-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--lm-text-secondary);
+  margin-bottom: 10px;
+}
+
+// Status buttons
+.lm-status-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lm-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--btn-color, #{$primary-color});
+  background: color-mix(in srgb, var(--btn-color, #{$primary-color}) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--btn-color, #{$primary-color}) 25%, transparent);
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  .lm-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  &:hover {
+    background: color-mix(in srgb, var(--btn-color, #{$primary-color}) 20%, transparent);
+    border-color: var(--btn-color);
+  }
+  
+  &.lm-status-btn-active {
+    background: var(--btn-color);
+    color: white;
+    border-color: var(--btn-color);
+    
+    .lm-icon {
+      color: white;
+    }
+  }
+}
+
+// Priority selector
+.lm-priority-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.lm-priority-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--btn-color, #{$light-text-secondary});
+  background: var(--lm-bg-secondary);
+  border: 1px solid var(--lm-border);
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: var(--btn-color);
+    color: var(--btn-color);
+  }
+  
+  &.lm-priority-btn-active {
+    background: var(--btn-color);
+    color: white;
+    border-color: var(--btn-color);
+  }
+}
+
+// Description input
+.lm-description-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--lm-text);
+  background: var(--lm-bg-secondary);
+  border: 1px solid var(--lm-border);
+  border-radius: $border-radius-sm;
+  resize: vertical;
+  min-height: 60px;
+  transition: border-color $transition-fast;
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+  }
+  
+  &::placeholder {
+    color: var(--lm-text-secondary);
+  }
+}
+
+.lm-save-description-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: white;
+  background: $primary-color;
+  border: none;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: background $transition-fast;
+  
+  &:hover {
+    background: color-mix(in srgb, #{$primary-color} 85%, black);
+  }
+}
+
+// Action buttons
+.lm-dropdown-actions {
+  padding: 12px 16px;
+}
+
+.lm-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  border: none;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  .lm-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.lm-action-delete {
+  color: $danger-color;
+  background: color-mix(in srgb, #{$danger-color} 10%, transparent);
+  
+  &:hover {
+    background: color-mix(in srgb, #{$danger-color} 20%, transparent);
+  }
+}
+
+.lm-action-restore {
+  color: $success-color;
+  background: color-mix(in srgb, #{$success-color} 10%, transparent);
+  
+  &:hover {
+    background: color-mix(in srgb, #{$success-color} 20%, transparent);
+  }
+}
+
+// =================================================================
+// SCROLLBAR STYLES
+// =================================================================
+
+.lm-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lm-border) transparent;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--lm-border);
+    border-radius: 3px;
+    
+    &:hover {
+      background: var(--lm-text-secondary);
+    }
+  }
+}

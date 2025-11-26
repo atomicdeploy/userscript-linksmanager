@@ -1,0 +1,24 @@
+{
+  "name": "userscript-linksmanager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A userscript to collect and manage links on webpages with a backend API",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspace=packages/backend",
+    "start": "npm run start --workspace=packages/backend",
+    "demo": "npm run demo --workspace=packages/demo"
+  },
+  "keywords": [
+    "userscript",
+    "links",
+    "manager",
+    "greasemonkey",
+    "tampermonkey"
+  ],
+  "author": "",
+  "license": "MIT"
+}
