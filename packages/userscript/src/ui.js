@@ -870,17 +870,19 @@ const LinksManagerUI = {
   updateTopbarUI(pageInfo, totalPages) {
     if (!this.topbar) return;
 
-    // Update total pages stat
-    const totalEl = this.topbar.querySelector('#lm-stat-total');
-    if (totalEl) {
-      totalEl.textContent = this.formatNumber(totalPages);
+    // Update total pages stat (only if provided)
+    if (totalPages !== null && totalPages !== undefined) {
+      const totalEl = this.topbar.querySelector('#lm-stat-total');
+      if (totalEl) {
+        totalEl.textContent = this.formatNumber(totalPages);
+      }
     }
 
     // Update domain stat
     const domainEl = this.topbar.querySelector('#lm-stat-domain');
     if (domainEl && pageInfo.domain_stats) {
       domainEl.textContent = this.formatNumber(pageInfo.domain_stats.total_links);
-    } else if (domainEl) {
+    } else if (domainEl && !pageInfo.domain_stats) {
       domainEl.textContent = '0';
     }
 
@@ -894,7 +896,16 @@ const LinksManagerUI = {
       
       if (statusBadge) {
         statusBadge.style.setProperty('--badge-color', statusConfig.color);
-        statusBadge.innerHTML = `${this.icons.get(statusConfig.icon)}<span id="lm-page-status-text">${statusConfig.label}</span>`;
+        // Update icon by finding the SVG element
+        const iconEl = statusBadge.querySelector('.lm-icon');
+        if (iconEl) {
+          iconEl.outerHTML = this.icons.get(statusConfig.icon);
+        }
+        // Update text content
+        const textEl = statusBadge.querySelector('#lm-page-status-text');
+        if (textEl) {
+          textEl.textContent = statusConfig.label;
+        }
       }
 
       // Update active priority button
@@ -1106,13 +1117,19 @@ const LinksManagerUI = {
   },
 
   /**
-   * Toggle crawl state between idle and queued
+   * Cycle through crawl states
+   * Cycles: idle -> queued -> crawling -> completed -> idle (skips 'failed')
    */
   async toggleCrawlState() {
     if (!this.currentPageInfo?.exists || !this.currentPageInfo?.link) return;
 
     const currentCrawl = this.currentPageInfo.link.crawl_state || 'idle';
-    const nextCrawl = currentCrawl === 'idle' ? 'queued' : 'idle';
+    // Define the cycle order (skipping 'failed' as it's an error state)
+    const crawlCycle = ['idle', 'queued', 'crawling', 'completed'];
+    const currentIndex = crawlCycle.indexOf(currentCrawl);
+    // If current state is not in cycle (e.g., 'failed'), reset to 'idle'
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % crawlCycle.length;
+    const nextCrawl = crawlCycle[nextIndex];
 
     await this.updateCurrentPageCrawlState(nextCrawl);
   }

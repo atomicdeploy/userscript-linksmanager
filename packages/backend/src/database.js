@@ -43,10 +43,10 @@ db.exec(`
 `);
 
 // Add crawl_state column if it doesn't exist (migration for existing databases)
-try {
+const tableInfo = db.prepare('PRAGMA table_info(links)').all();
+const hasCrawlState = tableInfo.some(col => col.name === 'crawl_state');
+if (!hasCrawlState) {
   db.exec('ALTER TABLE links ADD COLUMN crawl_state TEXT DEFAULT \'idle\'');
-} catch (e) {
-  // Column already exists, ignore
 }
 
 /**
